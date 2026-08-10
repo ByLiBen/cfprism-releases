@@ -1,0 +1,54 @@
+name: Upload release asset
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing draft Release tag
+        required: true
+        type: string
+      asset_branch:
+        description: Temporary branch containing the release asset
+        required: true
+        type: string
+      asset_path:
+        description: Asset path inside the temporary branch
+        required: true
+        type: string
+      asset_name:
+        description: Published Release asset name
+        required: true
+        type: string
+      sha256:
+        description: Expected lowercase SHA-256
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Retrieve and verify staged asset
+        env:
+          ASSET_BRANCH: ${{ inputs.asset_branch }}
+          ASSET_PATH: ${{ inputs.asset_path }}
+          ASSET_NAME: ${{ inputs.asset_name }}
+          EXPECTED_SHA256: ${{ inputs.sha256 }}
+        run: |
+          git fetch --no-tags origin "refs/heads/${ASSET_BRANCH}:refs/remotes/origin/${ASSET_BRANCH}"
+          git show "origin/${ASSET_BRANCH}:${ASSET_PATH}" > "${RUNNER_TEMP}/${ASSET_NAME}"
+          actual_sha256="$(sha256sum "${RUNNER_TEMP}/${ASSET_NAME}" | awk '{print $1}')"
+          test "${actual_sha256}" = "${EXPECTED_SHA256}"
+      - name: Upload to the existing draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          ASSET_NAME: ${{ inputs.asset_name }}
+        run: |
+          gh release upload "${RELEASE_TAG}" "${RUNNER_TEMP}/${ASSET_NAME}#${ASSET_NAME}"
