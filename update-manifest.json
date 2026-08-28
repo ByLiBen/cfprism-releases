@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "releases": [
+    {
+      "tag_name": "v1.1.12",
+      "name": "cfprism v1.1.12",
+      "body": "## Cloudflare 优选排序修复\n\n- 每个端口会完整复核本端口候选池（默认最多 100 个），再按单连接实测速率、TTFB、丢包和初筛延迟排序并保留 Top N。\n- 修复旧版在某一批次凑够 Top N 后提前停止、可能遗漏后续更快候选的问题。\n- 多端口结果保持端口独立：每个端口分别保留 Top N，合并时不再跨端口二次淘汰相同 IP。\n- 完整候选池复核会增加线路优选耗时和测试流量，但结果更稳定、更符合全量候选的实际排序。",
+      "html_url": "https://github.com/ByLiBen/cfprism-releases/releases/tag/v1.1.12",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-08-28T17:11:39Z",
+      "assets": [
+        {
+          "name": "cfbest-sub-gui-offline-windows-amd64.zip",
+          "size": 28337526,
+          "digest": "sha256:25d0e71f812dce4776b63b69f349edcf31e05d8e32338d43d76118497ac540fc",
+          "browser_download_url": "https://github.com/ByLiBen/cfprism-releases/releases/download/v1.1.12/cfbest-sub-gui-offline-windows-amd64.zip"
+        }
+      ]
+    }
+  ]
+}
