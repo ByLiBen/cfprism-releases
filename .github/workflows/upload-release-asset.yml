@@ -52,13 +52,16 @@ jobs:
           ASSET_NAME: ${{ inputs.asset_name }}
           EXPECTED_SHA256: ${{ inputs.sha256 }}
         run: |
-          remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq ".assets[] | select(.name == \"${ASSET_NAME}\") | .digest" | head -n 1)"
+          release_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases" --jq ".[] | select(.tag_name == \"${RELEASE_TAG}\") | .id" | head -n 1)"
+          test -n "${release_id}"
+          remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq ".assets[] | select(.name == \"${ASSET_NAME}\") | .digest" | head -n 1)"
           if [ -z "${remote_digest}" ]; then
             gh release upload "${RELEASE_TAG}" "${RUNNER_TEMP}/${ASSET_NAME}#${ASSET_NAME}"
             for attempt in 1 2 3 4 5; do
-              remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq ".assets[] | select(.name == \"${ASSET_NAME}\") | .digest" | head -n 1)"
+              remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq ".assets[] | select(.name == \"${ASSET_NAME}\") | .digest" | head -n 1)"
               [ -n "${remote_digest}" ] && break
               sleep 2
             done
           fi
+          echo "GitHub asset digest: ${remote_digest}"
           test "${remote_digest}" = "sha256:${EXPECTED_SHA256}"
