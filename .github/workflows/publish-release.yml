@@ -1,0 +1,119 @@
+name: Publish release
+
+on:
+  push:
+    branches:
+      - 'publish/**'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag and target
+        id: meta
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          tag="${GITHUB_REF_NAME#publish/}"
+          if [ -z "${tag}" ]; then
+            echo "Unable to derive a tag from branch ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+          if echo "${tag}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            :
+          else
+            echo "Tag ${tag} does not look like a semantic version" >&2
+            exit 1
+          fi
+          main_sha="$(git rev-parse origin/main)"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "main_sha=${main_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify staged asset and notes
+        id: verify_local
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          asset="cfbest-sub-gui-offline-windows-amd64.zip"
+          notes="RELEASE_NOTES_${TAG}.md"
+          test -f "${asset}"
+          test -f "${notes}"
+          local_sha="$(sha256sum "${asset}" | awk '{print $1}')"
+          if ! grep -q "${local_sha}" "${notes}"; then
+            echo "SHA-256 in ${notes} does not match the staged asset" >&2
+            exit 1
+          fi
+          echo "local_sha=${local_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          MAIN_SHA: ${{ steps.meta.outputs.main_sha }}
+        run: |
+          set -euo pipefail
+          existing_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases" \
+            --jq ".[] | select(.tag_name == \"${TAG}\") | .id" | head -n 1 || true)"
+          if [ -n "${existing_id}" ]; then
+            echo "Draft release already exists for ${TAG} (id ${existing_id}), reusing it."
+          else
+            gh release create "${TAG}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --target "${MAIN_SHA}" \
+              --title "cfprism ${TAG}" \
+              --notes-file "RELEASE_NOTES_${TAG}.md" \
+              --draft
+          fi
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          asset="cfbest-sub-gui-offline-windows-amd64.zip"
+          gh release upload "${TAG}" "${asset}#${asset}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --clobber
+
+      - name: Verify GitHub asset digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          EXPECTED_SHA: ${{ steps.verify_local.outputs.local_sha }}
+        run: |
+          set -euo pipefail
+          asset="cfbest-sub-gui-offline-windows-amd64.zip"
+          release_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases" \
+            --jq ".[] | select(.tag_name == \"${TAG}\") | .id" | head -n 1)"
+          test -n "${release_id}"
+          remote_digest=""
+          for attempt in $(seq 1 40); do
+            remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq ".assets[] | select(.name == \"${asset}\") | .digest" | head -n 1 || true)"
+            if [ -n "${remote_digest}" ]; then
+              break
+            fi
+            sleep 5
+          done
+          echo "GitHub asset digest: ${remote_digest}"
+          expected="sha256:${EXPECTED_SHA}"
+          test "${remote_digest}" = "${expected}"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release edit "${TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --draft=false \
+            --latest
