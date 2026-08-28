@@ -45,10 +45,20 @@ jobs:
           git show "origin/${ASSET_BRANCH}:${ASSET_PATH}" > "${RUNNER_TEMP}/${ASSET_NAME}"
           actual_sha256="$(sha256sum "${RUNNER_TEMP}/${ASSET_NAME}" | awk '{print $1}')"
           test "${actual_sha256}" = "${EXPECTED_SHA256}"
-      - name: Upload to the existing draft Release
+      - name: Upload to the existing draft Release and verify GitHub digest
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
           ASSET_NAME: ${{ inputs.asset_name }}
+          EXPECTED_SHA256: ${{ inputs.sha256 }}
         run: |
-          gh release upload "${RELEASE_TAG}" "${RUNNER_TEMP}/${ASSET_NAME}#${ASSET_NAME}"
+          remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq ".assets[] | select(.name == \"${ASSET_NAME}\") | .digest" | head -n 1)"
+          if [ -z "${remote_digest}" ]; then
+            gh release upload "${RELEASE_TAG}" "${RUNNER_TEMP}/${ASSET_NAME}#${ASSET_NAME}"
+            for attempt in 1 2 3 4 5; do
+              remote_digest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq ".assets[] | select(.name == \"${ASSET_NAME}\") | .digest" | head -n 1)"
+              [ -n "${remote_digest}" ] && break
+              sleep 2
+            done
+          fi
+          test "${remote_digest}" = "sha256:${EXPECTED_SHA256}"
