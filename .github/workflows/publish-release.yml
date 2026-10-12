@@ -63,6 +63,11 @@ jobs:
           existing_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases" \
             --jq ".[] | select(.tag_name == \"${TAG}\") | .id" | head -n 1 || true)"
           if [ -n "${existing_id}" ]; then
+            is_draft="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${existing_id}" --jq '.draft')"
+            if [ "${is_draft}" != "true" ]; then
+              echo "Refusing to modify an already published release: ${TAG}" >&2
+              exit 1
+            fi
             echo "Draft release already exists for ${TAG} (id ${existing_id}), reusing it."
           else
             gh release create "${TAG}" \
@@ -116,4 +121,5 @@ jobs:
           gh release edit "${TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
             --draft=false \
+            --prerelease=false \
             --latest
