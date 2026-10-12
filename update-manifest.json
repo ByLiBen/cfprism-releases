@@ -2,6 +2,23 @@
   "schema_version": 1,
   "releases": [
     {
+      "tag_name": "v1.1.16",
+      "name": "cfprism v1.1.16",
+      "body": "## Windows 界面与网络路径\n\n- 更新登录页、控制台、主题样式和应用图标。\n- 高级设置新增任务级软件代理绕过和可选 IPv4 测速网关；网关模式需要管理员权限，只为测速 IP 池添加临时路由，不修改默认网关或 DNS。\n- 临时路由会影响其他软件对相同 IP 的访问，不保证绕过 TUN/WFP；结束、取消或退出后尝试清理，失败会提示。\n- 网络画像按路径隔离缓存，新增取消挖掘并改善多端口取消响应。\n- 认证服务器临时不可用时保留会话凭据，更新保留已有配置和输出。\n\n离线依赖：CloudflareSpeedTest v2.3.5、Mihomo v1.19.32。",
+      "html_url": "https://github.com/ByLiBen/cfprism-releases/releases/tag/v1.1.16",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-10-12T13:14:00Z",
+      "assets": [
+        {
+          "name": "cfbest-sub-gui-offline-windows-amd64.zip",
+          "size": 31186901,
+          "digest": "sha256:5f354a9758998929b81afedadd0d77e80cf34d566f2ad0c242f82b3d38fffe65",
+          "browser_download_url": "https://github.com/ByLiBen/cfprism-releases/releases/download/v1.1.16/cfbest-sub-gui-offline-windows-amd64.zip"
+        }
+      ]
+    },
+    {
       "tag_name": "v1.1.15",
       "name": "cfprism v1.1.15",
       "body": "## 优选助手鉴权与会话恢复\n\n- 软件专用 Token 按服务端有效期处理；Windows GUI 安全保存并在线校验后恢复会话。\n- 新的同类软件登录替换旧会话；安卓 App 和 Windows Magic Cat 使用独立会话版本。\n- 权限不足暂停受保护功能并引导到网站；临时故障保留凭据重试。\n- 订阅密钥不再随来源和网络错误回显。",
