@@ -2,6 +2,23 @@
   "schema_version": 1,
   "releases": [
     {
+      "tag_name": "v1.1.18",
+      "name": "cfprism v1.1.18",
+      "body": "# cfprism v1.1.18\n\n## 打开即用\n\n- 桌面版启动后直接进入控制台，移除账号登录页、账号信息与退出登录入口。\n- 移除软件登录、在线会话校验和授权到期限制，测速、订阅导出、本地订阅服务及自动刷新计划不再依赖软件账号。\n- 命令行版无需提供软件账号、密码或登录环境变量，启动后即可使用。\n- 保留订阅源自身的访问凭据及订阅接口、Linux Web 服务的访问令牌规则。\n\n## Windows AMD64 离线包\n\n- 文件：`cfbest-sub-gui-offline-windows-amd64.zip`\n- SHA-256：`acd0d0169af85b475b7b26d03215eca9dfe3610f65b6f6926108da0d63863c89`\n- GUI SHA-256：`05b38a8517d687ae97f9106be091e2e08967b73868ca47b69e1cd95e853c36eb`\n- 随包 CloudflareSpeedTest：`v2.3.5`\n- 随包 Mihomo：`v1.19.33`\n\n请完整解压后运行 `cfbest-sub-gui.exe`，不要直接在压缩包内运行。\n\nv1.1.1 及后续客户端可通过软件内更新升级；v1.1.0 及更早客户端需手动安装一次新版。\n",
+      "html_url": "https://github.com/ByLiBen/cfprism-releases/releases/tag/v1.1.18",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-10-26T14:17:31Z",
+      "assets": [
+        {
+          "name": "cfbest-sub-gui-offline-windows-amd64.zip",
+          "size": 31845468,
+          "digest": "sha256:acd0d0169af85b475b7b26d03215eca9dfe3610f65b6f6926108da0d63863c89",
+          "browser_download_url": "https://github.com/ByLiBen/cfprism-releases/releases/download/v1.1.18/cfbest-sub-gui-offline-windows-amd64.zip"
+        }
+      ]
+    },
+    {
       "tag_name": "v1.1.17",
       "name": "cfprism v1.1.17",
       "body": "## Windows 一步优化\n\n- 控制台只保留“开始优化”：首次自动识别 Colo 后继续生成订阅，之后可沿用或重新识别。\n- 未导入订阅时弹提醒，提供“只跑colo”与“去导入”。\n- 订阅管理拆分为导入/导出两个标签页；订阅链接移至接口开关下方，按钮改为“保存并生效”。\n- 任务中心独立承载进度、日志与自动刷新计划。\n\nLinux 极简命令行随源码仓库发布，不含在本离线包内。\n\n离线依赖：CloudflareSpeedTest v2.3.5、Mihomo v1.19.32。",
